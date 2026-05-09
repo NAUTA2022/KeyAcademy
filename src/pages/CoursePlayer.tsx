@@ -4,9 +4,11 @@ import {
   ChevronLeft, Play, FileText, HelpCircle, CheckCircle,
   ChevronDown, Trophy, Lock, Menu, X, Loader2,
 } from 'lucide-react';
+import { useActiveAccount } from 'thirdweb/react';
 import { fetchCourseContent } from '../lib/notionService';
-import { getCourseContent, getCourses } from '../lib/contentStore';
+import { getCourseContent, getCourses, hasAccessToCourse } from '../lib/contentStore';
 import { getDisplayUrl } from '../lib/notionDB';
+import { useUserEmail } from '../lib/useUserEmail';
 import type { Section, Lesson } from '../lib/courseTypes';
 
 // ─── Progress helpers ─────────────────────────────────────────────
@@ -153,6 +155,8 @@ function CourseSidebar({
 export default function CoursePlayer() {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const account  = useActiveAccount();
+  const userEmail = useUserEmail();
 
   const courses  = getCourses();
   const course   = courses.find(c => c.id === id);
@@ -182,6 +186,43 @@ export default function CoursePlayer() {
         <Lock className="w-12 h-12 text-gray-300" />
         <p className="text-gray-500">Curso no encontrado.</p>
         <Link to="/courses" className="text-sky-500 hover:underline text-sm">← Volver a cursos</Link>
+      </div>
+    );
+  }
+
+  // ── Access gate ───────────────────────────────────────────────
+  // Free courses only require being logged in; paid courses require purchase
+  const isFree   = course.price === 0;
+  const hasAccess = isFree
+    ? Boolean(account)                          // free: need wallet/login
+    : hasAccessToCourse(userEmail, course.id);  // paid: need purchase
+
+  if (!hasAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center gap-4 max-w-sm mx-auto">
+        <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/40 rounded-full flex items-center justify-center">
+          <Lock className="w-8 h-8 text-indigo-500" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            {!account ? 'Inicia sesión para continuar' : 'Acceso restringido'}
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {!account
+              ? 'Conecta tu wallet o inicia sesión para acceder a este curso.'
+              : `"${course.title}" requiere una compra o membresía activa.`}
+          </p>
+        </div>
+        <div className="flex gap-3 flex-wrap justify-center">
+          <Link to="/courses" className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+            ← Ver cursos
+          </Link>
+          {account && (
+            <Link to="/membership" className="px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">
+              Ver membresías →
+            </Link>
+          )}
+        </div>
       </div>
     );
   }

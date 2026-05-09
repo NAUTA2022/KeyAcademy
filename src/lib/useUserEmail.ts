@@ -17,4 +17,4 @@ export function useUserEmail() {
   return email;
 }
 
-export const ADMIN_EMAIL = 'andresquinteros2017@gmail.com';
+export const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL as string | undefined) ?? '';

@@ -3,7 +3,7 @@ import { CheckCircle, X, Sparkles, Star, Zap, Users, Shield, ArrowRight } from '
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserEmail } from '../lib/useUserEmail';
 import { PLANS, consumePendingPayment, getCourseIdsForPlan, type Plan } from '../lib/payments';
-import { grantPremium, getUsers } from '../lib/contentStore';
+import { grantPremium, getUsers, upsertUser } from '../lib/contentStore';
 import PaymentModal from '../components/PaymentModal';
 
 /* ── Plan Card ───────────────────────────────────────────── */
@@ -107,10 +107,16 @@ export default function Membership() {
     if (params.get('stripe_success') === '1') {
       const pending = consumePendingPayment();
       if (pending) {
-        const planId = PLANS.find(p => p.name === pending.productName)?.id;
-        if (planId) {
-          grantPremium(pending.email, getCourseIdsForPlan(planId));
+        if (pending.courseId) {
+          // Individual course purchased via Stripe redirect
+          upsertUser({ email: pending.email, plan: 'premium', enabledCourses: [pending.courseId] });
           setSuccessBanner(`¡Pago exitoso! Tu acceso a "${pending.productName}" ha sido activado.`);
+        } else {
+          const planId = PLANS.find(p => p.name === pending.productName)?.id;
+          if (planId) {
+            grantPremium(pending.email, getCourseIdsForPlan(planId));
+            setSuccessBanner(`¡Pago exitoso! Tu acceso a "${pending.productName}" ha sido activado.`);
+          }
         }
       } else {
         setSuccessBanner('¡Pago procesado! Si tu acceso no se activó, contáctanos por Telegram.');

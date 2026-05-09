@@ -56,18 +56,19 @@ function SuccessScreen({ title, subtitle, onClose }: {
 }
 
 /* ── Stripe Card Tab (real link) ─────────────────────────────── */
-function StripeTab({ amount, productName, stripeLink, email, onEmailChange }: {
+function StripeTab({ amount, productName, stripeLink, email, onEmailChange, courseId }: {
   amount: number;
   productName: string;
   stripeLink: string;
   email: string;
   onEmailChange: (e: string) => void;
+  courseId?: string;
 }) {
   const hasLink = Boolean(stripeLink);
 
   function handlePay() {
     if (!email.trim()) { alert('Ingresa tu correo electrónico para continuar.'); return; }
-    storePendingPayment({ planId: productName, productName, price: amount, email });
+    storePendingPayment({ planId: productName, productName, price: amount, email, courseId });
     const url = buildStripeUrl(stripeLink, email);
     window.open(url || '#', '_blank');
   }
@@ -148,7 +149,10 @@ export default function PaymentModal({ mode, plan, course, onClose, onSuccess }:
 
   const amount = mode === 'plan' ? (plan?.price ?? 0) : (course?.price ?? 0);
   const productName = mode === 'plan' ? (plan?.name ?? '') : (course?.title ?? '');
-  const stripeLink = mode === 'plan' ? (STRIPE_LINKS[plan?.id as 'courses' | 'full'] ?? '') : '';
+  // For plans use the plan's Stripe link; for individual courses use content_url if it looks like a Stripe link
+  const stripeLink = mode === 'plan'
+    ? (STRIPE_LINKS[plan?.id as 'courses' | 'full'] ?? '')
+    : (course?.content_url?.includes('stripe.com') || course?.content_url?.includes('buy.stripe') ? (course.content_url ?? '') : '');
   const effectiveEmail = userEmail || emailInput;
   const hasCryptoConfig = Boolean(ADMIN_WALLET);
 
@@ -323,6 +327,7 @@ export default function PaymentModal({ mode, plan, course, onClose, onSuccess }:
                   stripeLink={stripeLink}
                   email={userEmail || emailInput}
                   onEmailChange={setEmailInput}
+                  courseId={mode === 'course' ? course?.id : undefined}
                 />
               )}
             </div>
