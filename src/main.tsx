@@ -1,37 +1,13 @@
-import { StrictMode, Component, type ReactNode } from 'react';
-import { createRoot } from 'react-dom/client';
 import './index.css';
-import App from './App.tsx';
 
-/** Top-level error boundary — catches any render crash */
-class RootErrorBoundary extends Component<
-  { children: ReactNode },
-  { error: Error | null }
-> {
-  constructor(props: { children: ReactNode }) {
-    super(props);
-    this.state = { error: null };
-  }
-  static getDerivedStateFromError(error: Error) {
-    return { error };
-  }
-  render() {
-    if (this.state.error) {
-      return (
-        <div style={{ padding: 32, fontFamily: 'sans-serif', textAlign: 'center' }}>
-          <h2>Algo salió mal 😕</h2>
-          <p>Por favor recarga la página. Si el problema persiste contáctanos.</p>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
+// Dynamic imports avoid a silent module-level crash that blanks the page
+// when certain browser APIs (used by ThirdWeb) are evaluated synchronously.
+const { StrictMode } = await import('react');
+const { createRoot } = await import('react-dom/client');
+const { default: App } = await import('./App.tsx');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RootErrorBoundary>
-      <App />
-    </RootErrorBoundary>
+    <App />
   </StrictMode>,
 );
