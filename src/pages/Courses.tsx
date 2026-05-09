@@ -111,7 +111,8 @@ function CourseDrawer({
   const account = useActiveAccount();
   const userEmail = useUserEmail();
   const navigate = useNavigate();
-  const [showPayment, setShowPayment] = useState(false);
+  const [showPayment, setShowPayment]   = useState(false);
+  const [defaultTab,  setDefaultTab]    = useState<'crypto' | 'card'>('crypto');
   const isFree = course.price === 0;
   const sections = getCourseContent()[course.id] ?? [];
   const totalLessons = sections.reduce((acc, s) => acc + s.lessons.length, 0);
@@ -279,12 +280,12 @@ function CourseDrawer({
               </button>
             ) : (
               <div className="space-y-2">
-                <button onClick={() => setShowPayment(true)}
+                <button onClick={() => { setDefaultTab('crypto'); setShowPayment(true); }}
                   className="w-full py-3 rounded-xl font-bold text-sm text-white transition flex items-center justify-center gap-2 shadow-lg"
                   style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 4px 15px rgba(99,102,241,0.35)' }}>
                   <Sparkles className="w-4 h-4" /> Comprar con cripto (ETH/USDC)
                 </button>
-                <button onClick={() => setShowPayment(true)}
+                <button onClick={() => { setDefaultTab('card'); setShowPayment(true); }}
                   className="w-full py-3 rounded-xl font-bold text-sm text-white transition flex items-center justify-center gap-2"
                   style={{ background: 'linear-gradient(135deg, #635bff, #0570de)' }}>
                   <CreditCard className="w-4 h-4" /> Comprar con tarjeta
@@ -300,6 +301,7 @@ function CourseDrawer({
         <PaymentModal
           mode="course"
           course={course}
+          defaultTab={defaultTab}
           onClose={() => setShowPayment(false)}
           onSuccess={() => { setShowPayment(false); }}
         />

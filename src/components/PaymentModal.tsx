@@ -28,6 +28,7 @@ export interface PaymentModalProps {
   mode: 'plan' | 'course';
   plan?: Plan;
   course?: Course;
+  defaultTab?: 'crypto' | 'card';
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -141,9 +142,9 @@ function StripeTab({ amount, productName, stripeLink, email, onEmailChange, cour
 }
 
 /* ── Main Modal ──────────────────────────────────────────────── */
-export default function PaymentModal({ mode, plan, course, onClose, onSuccess }: PaymentModalProps) {
+export default function PaymentModal({ mode, plan, course, defaultTab = 'crypto', onClose, onSuccess }: PaymentModalProps) {
   const userEmail = useUserEmail();
-  const [payTab, setPayTab] = useState<'crypto' | 'card'>('crypto');
+  const [payTab, setPayTab] = useState<'crypto' | 'card'>(defaultTab);
   const [success, setSuccess] = useState(false);
   const [emailInput, setEmailInput] = useState(userEmail || '');
 

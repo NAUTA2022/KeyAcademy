@@ -1,31 +1,29 @@
 import { Link } from 'react-router-dom';
-import { Calendar, BookOpen, Users, ArrowRight, Zap } from 'lucide-react';
-import { getEvents, getCourses } from '../lib/contentStore';
+import { Calendar, BookOpen, Users, ArrowRight, Zap, BookMarked } from 'lucide-react';
+import { getEvents, getCourses, getHome } from '../lib/contentStore';
 import { getDisplayUrl } from '../lib/notionDB';
 
-const features = [
-  {
-    icon: Zap,
-    title: 'Aprende con expertos',
-    description: 'Workshops y eventos en vivo con referentes de Web3, blockchain e IA.',
-    color: 'from-amber-400 to-orange-500',
-  },
-  {
-    icon: Users,
-    title: 'Comunidad activa',
-    description: 'Conecta con builders, inversores y creadores del ecosistema descentralizado.',
-    color: 'from-sky-400 to-cyan-500',
-  },
-  {
-    icon: BookOpen,
-    title: 'Cursos & recursos',
-    description: 'Desde Solidity básico hasta auditorías de contratos. A tu ritmo, desde cero.',
-    color: 'from-indigo-400 to-violet-500',
-  },
-];
+// Icon map for feature cards configured from the admin panel
+const ICON_MAP: Record<string, React.ElementType> = {
+  zap:  Zap,
+  users: Users,
+  book: BookOpen,
+  'book-open': BookOpen,
+  bookopen: BookOpen,
+  bookmarked: BookMarked,
+  calendar: Calendar,
+};
+
+function FeatureIcon({ name }: { name: string }) {
+  const Icon = ICON_MAP[name?.toLowerCase()] ?? Zap;
+  return <Icon className="w-5 h-5 text-white" />;
+}
 
 export default function Home() {
-  const nextEvents = getEvents().filter(e => new Date(e.date) >= new Date()).slice(0, 2);
+  const home           = getHome();
+  const { hero, logoUrl, features } = home;
+
+  const nextEvents     = getEvents().filter(e => new Date(e.date) >= new Date()).slice(0, 2);
   const featuredCourses = getCourses().slice(0, 3);
 
   return (
@@ -43,22 +41,34 @@ export default function Home() {
             <path d="M0 420 Q220 320 440 440 T750 390" stroke="#c4b5fd" strokeWidth="70" fill="none" strokeLinecap="round" />
           </svg>
         </div>
+
+        {/* Optional logo image — top-left inside hero */}
+        {logoUrl && (
+          <img
+            src={getDisplayUrl(logoUrl)}
+            alt="Logo"
+            className="absolute top-5 left-5 h-10 object-contain z-10 drop-shadow-lg"
+          />
+        )}
+
         <div className="relative z-10 p-6 sm:p-10 pb-8 sm:pb-12 max-w-2xl">
-          <span className="inline-flex items-center gap-1.5 bg-white/15 text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 backdrop-blur-sm border border-white/20">
-            <Zap className="w-3.5 h-3.5" /> Plataforma Web3 + IA
-          </span>
+          {hero.badge && (
+            <span className="inline-flex items-center gap-1.5 bg-white/15 text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 backdrop-blur-sm border border-white/20">
+              <Zap className="w-3.5 h-3.5" /> {hero.badge}
+            </span>
+          )}
           <h1 className="text-3xl sm:text-5xl font-bold text-white leading-tight mb-4">
-            Key Lab Academy
+            {hero.title || 'Key Lab Academy'}
           </h1>
           <p className="text-sm sm:text-lg text-white/85 mb-6 leading-relaxed">
-            Desbloquea el futuro de la tecnología. Aprende blockchain, Web3 e IA con expertos.
+            {hero.subtitle}
           </p>
           <div className="flex gap-3 flex-wrap">
             <Link to="/events" className="bg-sky-400 hover:bg-sky-500 text-white font-bold px-5 sm:px-7 py-2.5 sm:py-3 rounded-full transition-colors text-sm shadow-lg shadow-sky-500/30">
-              Ver eventos →
+              {hero.btn1 || 'Ver eventos →'}
             </Link>
             <Link to="/courses" className="bg-white/15 hover:bg-white/25 text-white font-bold px-5 sm:px-7 py-2.5 sm:py-3 rounded-full transition-colors text-sm backdrop-blur-sm border border-white/20">
-              Explorar cursos
+              {hero.btn2 || 'Explorar cursos'}
             </Link>
           </div>
         </div>
@@ -67,20 +77,22 @@ export default function Home() {
       {/* Features */}
       <section className="bg-white dark:bg-gray-800 rounded-2xl p-5 sm:p-8">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
-          {features.map((f, i) => {
-            const Icon = f.icon;
-            return (
-              <div key={i} className={`flex sm:flex-col items-start gap-3 sm:gap-0 ${i < 2 ? 'sm:border-r sm:border-gray-100 dark:sm:border-gray-700 sm:pr-6' : ''}`}>
-                <div className={`w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center sm:mb-3 shadow-sm`}>
-                  <Icon className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-1">{f.title}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{f.description}</p>
-                </div>
+          {features.map((f, i) => (
+            <div
+              key={i}
+              className={`flex sm:flex-col items-start gap-3 sm:gap-0 ${
+                i < 2 ? 'sm:border-r sm:border-gray-100 dark:sm:border-gray-700 sm:pr-6' : ''
+              }`}
+            >
+              <div className={`w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center sm:mb-3 shadow-sm`}>
+                <FeatureIcon name={f.icon} />
               </div>
-            );
-          })}
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-1">{f.title}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{f.description}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -97,8 +109,11 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {nextEvents.map(ev => (
-              <Link key={ev.id} to="/events"
-                className="flex gap-3 p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-sky-200 dark:hover:border-sky-700 hover:shadow-sm transition group">
+              <Link
+                key={ev.id}
+                to="/events"
+                className="flex gap-3 p-3 sm:p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-sky-200 dark:hover:border-sky-700 hover:shadow-sm transition group"
+              >
                 {ev.image_urls[0] && (
                   <img src={getDisplayUrl(ev.image_urls[0])} alt="" className="w-14 h-14 object-cover rounded-lg shrink-0" />
                 )}
@@ -115,7 +130,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* Featured courses — sin card wrapper, cards directas */}
+      {/* Featured courses */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 text-sm sm:text-base">
@@ -127,10 +142,15 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           {featuredCourses.map(c => (
-            <Link key={c.id} to="/courses"
-              className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-md transition group">
+            <Link
+              key={c.id}
+              to="/courses"
+              className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-md transition group"
+            >
               <div className="h-32 overflow-hidden bg-gradient-to-br from-indigo-500 to-sky-500">
-                {c.image_url && <img src={getDisplayUrl(c.image_url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />}
+                {c.image_url && (
+                  <img src={getDisplayUrl(c.image_url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                )}
               </div>
               <div className="p-3">
                 <p className="text-xs font-bold text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">{c.title}</p>

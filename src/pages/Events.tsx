@@ -55,18 +55,25 @@ function RegisterModal({ event, onClose }: { event: Event; onClose: () => void }
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
+  const supabaseConfigured = Boolean(
+    import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      const { error: dbErr } = await supabase.from('registrations').insert({
-        event_id: event.id,
-        user_email: email,
-        user_name: name,
-        wallet_address: account?.address,
-      });
-      if (dbErr && !dbErr.message.includes('duplicate')) throw dbErr;
+      // Only write to Supabase if it's configured — skip silently otherwise
+      if (supabaseConfigured) {
+        const { error: dbErr } = await supabase.from('registrations').insert({
+          event_id: event.id,
+          user_email: email,
+          user_name: name,
+          wallet_address: account?.address,
+        });
+        if (dbErr && !dbErr.message.includes('duplicate')) throw dbErr;
+      }
 
       await sendRegistrationEmail({
         toEmail: email,
